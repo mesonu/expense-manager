@@ -8,6 +8,7 @@ import TrendChart from '@/components/analytics/TrendChart';
 import CategoryDistribution from '@/components/analytics/CategoryDistribution';
 import SpendingInsights from '@/components/analytics/SpendingInsights';
 import BudgetTracker from '@/components/analytics/BudgetTracker';
+import ExpensePredictions from '@/components/analytics/ExpensePredictions';
 
 export default function AnalyticsPage() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
@@ -53,6 +54,7 @@ export default function AnalyticsPage() {
       <div className="grid grid-cols-1 gap-6">
         <TrendChart expenses={expenses} timeframe={timeframe} />
         <CategoryDistribution expenses={expenses} timeframe={timeframe} />
+        <ExpensePredictions expenses={expenses} />
       </div>
     </div>
   );
