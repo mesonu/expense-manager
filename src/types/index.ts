@@ -21,3 +21,10 @@ export type Expense = {
       amount: number;
     }[];
   };
+
+  // src/types/index.ts
+export interface Category {
+    id: string;
+    name: string;
+    color: string;
+  }

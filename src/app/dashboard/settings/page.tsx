@@ -1,62 +1,115 @@
 // src/app/dashboard/settings/page.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Tab } from '@headlessui/react';
+import { useState } from 'react';
 import { Category } from '@/types';
 import { categories as initialCategories } from '@/lib/dummyData';
-// import CategorySettings from '@/components/settings/CategorySettings';
-import BudgetSettings from '@/components/settings/BudgetSettings';
-import DataManagement from '@/components/settings/DataManagement';
-
-function classNames(...classes: string[]) {
-  return classes.filter(Boolean).join(' ');
-}
+import CategoryManager from '@/components/settings/CategoryManager';
+import BudgetManager from '@/components/settings/BudgetManager';
+import DataManager from '@/components/settings/DataManager';
 
 export default function SettingsPage() {
-  const [categories, setCategories] = useState<Category[]>(initialCategories);
-  
-  const tabs = [
-    // { name: 'Categories', component: CategorySettings },
-    { name: 'Budgets', component: BudgetSettings },
-    { name: 'Data Management', component: DataManagement },
-  ];
+  const [activeTab, setActiveTab] = useState('categories');
 
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-gray-800">Settings</h2>
 
-      <div className="bg-white rounded-lg shadow">
-        <Tab.Group>
-          <Tab.List className="flex border-b border-gray-200">
-            {tabs.map((tab) => (
-              <Tab
-                key={tab.name}
-                className={({ selected }) =>
-                  classNames(
-                    'px-6 py-3 text-sm font-medium',
-                    selected
-                      ? 'border-b-2 border-indigo-500 text-indigo-600'
-                      : 'text-gray-500 hover:text-gray-700'
-                  )
-                }
-              >
-                {tab.name}
-              </Tab>
-            ))}
-          </Tab.List>
-          <Tab.Panels className="p-6">
-            {tabs.map((tab, idx) => (
-              <Tab.Panel key={idx}>
-                <tab.component categories={categories} setCategories={setCategories} />
-              </Tab.Panel>
-            ))}
-          </Tab.Panels>
-        </Tab.Group>
+      {/* Tab Navigation */}
+      <div className="border-b border-gray-200">
+        <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+          {[
+            { id: 'categories', name: 'Categories' },
+            { id: 'budgets', name: 'Budget Management' },
+            { id: 'data', name: 'Data Management' },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`${
+                activeTab === tab.id
+                  ? 'border-indigo-500 text-indigo-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+            >
+              {tab.name}
+            </button>
+          ))}
+        </nav>
+      </div>
+
+      {/* Tab Content */}
+      <div className="bg-white rounded-lg shadow p-6">
+        {activeTab === 'categories' && <CategoryManager />}
+        {activeTab === 'budgets' && <BudgetManager />}
+        {activeTab === 'data' && <DataManager />}
       </div>
     </div>
   );
 }
+
+
+// // src/app/dashboard/settings/page.tsx
+// 'use client';
+
+// import { useState, useEffect } from 'react';
+// import { Tab } from '@headlessui/react';
+// import { Category } from '@/types';
+// import { categories as initialCategories } from '@/lib/dummyData';
+// // import CategorySettings from '@/components/settings/CategorySettings';
+// import BudgetSettings from '@/components/settings/BudgetSettings';
+// import DataManagement from '@/components/settings/DataManagement';
+
+// function classNames(...classes: string[]) {
+//   return classes.filter(Boolean).join(' ');
+// }
+
+// export default function SettingsPage() {
+//   const [categories, setCategories] = useState<Category[]>(initialCategories);
+  
+//   const tabs = [
+//     // { name: 'Categories', component: CategorySettings },
+//     { name: 'Budgets', component: BudgetSettings },
+//     { name: 'Data Management', component: DataManagement },
+//   ];
+
+//   return (
+//     <div className="space-y-6">
+//       <h2 className="text-2xl font-bold text-gray-800">Settings</h2>
+
+//       <div className="bg-white rounded-lg shadow">
+//         <Tab.Group>
+//           <Tab.List className="flex border-b border-gray-200">
+//             {tabs.map((tab) => (
+//               <Tab
+//                 key={tab.name}
+//                 className={({ selected }) =>
+//                   classNames(
+//                     'px-6 py-3 text-sm font-medium',
+//                     selected
+//                       ? 'border-b-2 border-indigo-500 text-indigo-600'
+//                       : 'text-gray-500 hover:text-gray-700'
+//                   )
+//                 }
+//               >
+//                 {tab.name}
+//               </Tab>
+//             ))}
+//           </Tab.List>
+//           <Tab.Panels className="p-6">
+//             {tabs.map((tab, idx) => (
+//               <Tab.Panel key={idx}>
+//                 <tab.component categories={categories} setCategories={setCategories} />
+//               </Tab.Panel>
+//             ))}
+//           </Tab.Panels>
+//         </Tab.Group>
+//       </div>
+//     </div>
+//   );
+// }
+
+
 
 // // src/app/dashboard/settings/page.tsx
 // 'use client';
