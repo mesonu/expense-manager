@@ -1,0 +1,187 @@
+// Adding Currency and Analytics related schemas
+
+// Existing schema remains the same, adding new models:
+
+// Currency Management
+model Currency {
+  id              String    @id @default(cuid())
+  code            String    @unique // e.g., USD, EUR, INR
+  name            String    // e.g., US Dollar
+  symbol          String    // e.g., $
+  exchangeRate    Float     // Base rate against USD
+  lastUpdated     DateTime  @updatedAt
+  isActive        Boolean   @default(true)
+  
+  // Relationships
+  userPreferences UserSettings[]
+  expenses        Expense[]
+  budgets         Budget[]
+}
+
+// Exchange Rates History
+model ExchangeRateHistory {
+  id          String    @id @default(cuid())
+  fromCurrency String
+  toCurrency   String
+  rate        Float
+  date        DateTime
+  
+  @@unique([fromCurrency, toCurrency, date])
+}
+
+// Analytics Models
+model ExpenseAnalytics {
+  id          String    @id @default(cuid())
+  userId      String
+  period      String    // YYYY-MM for monthly, YYYY for yearly
+  periodType  AnalyticsPeriod
+  totalAmount Float
+  categoryBreakdown Json // Detailed category-wise spending
+  tags        Json?    // Tag-wise analysis
+  trends      Json?    // Spending trends
+  insights    Json?    // AI-generated insights
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model BudgetAnalytics {
+  id          String    @id @default(cuid())
+  userId      String
+  period      String
+  periodType  AnalyticsPeriod
+  budgetedAmount Float
+  spentAmount Float
+  variance    Float
+  categoryAnalysis Json
+  trends      Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model SpendingInsights {
+  id          String    @id @default(cuid())
+  userId      String
+  type        InsightType
+  description String
+  metadata    Json?
+  importance  Int       // 1-5 scale
+  isRead      Boolean   @default(false)
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model SpendingPattern {
+  id          String    @id @default(cuid())
+  userId      String
+  patternType PatternType
+  frequency   String?
+  amount      Float?
+  category    String?
+  confidence  Float     // 0-1 scale
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Additional Enums
+enum AnalyticsPeriod {
+  DAILY
+  WEEKLY
+  MONTHLY
+  QUARTERLY
+  YEARLY
+}
+
+enum InsightType {
+  UNUSUAL_SPENDING
+  BUDGET_ALERT
+  SAVING_OPPORTUNITY
+  RECURRING_PATTERN
+  CATEGORY_INSIGHT
+  PREDICTION
+}
+
+enum PatternType {
+  RECURRING_EXPENSE
+  SEASONAL_EXPENSE
+  SPENDING_HABIT
+  SAVING_PATTERN
+  BUDGET_PATTERN
+}
+
+// Analytics Helper Models
+model CategoryTrend {
+  id          String    @id @default(cuid())
+  userId      String
+  categoryId  String
+  period      String
+  amount      Float
+  count       Int
+  average     Float
+  trend       Float     // Percentage change from previous period
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category    Category @relation(fields: [categoryId], references: [id])
+
+  @@unique([userId, categoryId, period])
+}
+
+model MonthlyReport {
+  id          String    @id @default(cuid())
+  userId      String
+  month       String    // YYYY-MM
+  summary     Json      // Monthly summary statistics
+  categories  Json      // Category-wise breakdown
+  insights    Json      // Monthly insights
+  comparisons Json      // Comparison with previous periods
+  goals       Json?     // Progress towards financial goals
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, month])
+}
+
+// Financial Goals
+model FinancialGoal {
+  id          String    @id @default(cuid())
+  userId      String
+  name        String
+  type        GoalType
+  targetAmount Float
+  currentAmount Float
+  startDate   DateTime
+  targetDate  DateTime
+  status      GoalStatus @default(IN_PROGRESS)
+  category    String?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum GoalType {
+  SAVING
+  SPENDING_REDUCTION
+  BUDGET_ADHERENCE
+  DEBT_PAYMENT
+  CUSTOM
+}
+
+enum GoalStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+  ON_HOLD
+}
