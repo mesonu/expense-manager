@@ -1,41 +1,156 @@
 // src/app/dashboard/page.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Expense } from '@/types';
-import { generateDummyExpenses } from '@/lib/dummyData';
-import ExpenseSummary from '@/components/dashboard/ExpenseSummary';
-import ExpenseChart from '@/components/dashboard/ExpenseChart';
-import RecentExpenses from '@/components/dashboard/RecentExpenses';
-import AddExpenseButton from '@/components/dashboard/AddExpenseButton';
+import { useState } from 'react';
+import {
+  ArrowUpRight,
+  ArrowDownRight,
+  DollarSign,
+  CreditCard,
+  PiggyBank,
+  Calendar,
+} from 'lucide-react';
+
+const stats = [
+  {
+    name: 'Total Expenses',
+    value: '$2,500',
+    change: '+12.5%',
+    changeType: 'increase',
+    icon: DollarSign,
+  },
+  {
+    name: 'Monthly Budget',
+    value: '$4,000',
+    change: 'On Track',
+    changeType: 'neutral',
+    icon: CreditCard,
+  },
+  {
+    name: 'Savings',
+    value: '$1,500',
+    change: '+8.2%',
+    changeType: 'increase',
+    icon: PiggyBank,
+  },
+  {
+    name: 'Recurring Expenses',
+    value: '$800',
+    change: 'Next: Rent',
+    changeType: 'neutral',
+    icon: Calendar,
+  },
+];
+
+const recentExpenses = [
+  {
+    id: 1,
+    description: 'Grocery Shopping',
+    amount: 120.50,
+    date: '2024-03-15',
+    category: 'Food',
+  },
+  {
+    id: 2,
+    description: 'Netflix Subscription',
+    amount: 15.99,
+    date: '2024-03-14',
+    category: 'Entertainment',
+  },
+  {
+    id: 3,
+    description: 'Gas',
+    amount: 45.00,
+    date: '2024-03-13',
+    category: 'Transportation',
+  },
+];
 
 export default function DashboardPage() {
-  const [expenses, setExpenses] = useState<Expense[]>([]);
-
-  useEffect(() => {
-    setExpenses(generateDummyExpenses());
-  }, []);
+  const [timeRange, setTimeRange] = useState('month');
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-800">Overview</h2>
-        <AddExpenseButton onExpenseAdded={(newExpense) => 
-          setExpenses([newExpense, ...expenses])} 
-        />
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold text-gray-900">Dashboard</h1>
+        <div className="flex space-x-2">
+          <select
+            value={timeRange}
+            onChange={(e) => setTimeRange(e.target.value)}
+            className="rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          >
+            <option value="week">This Week</option>
+            <option value="month">This Month</option>
+            <option value="year">This Year</option>
+          </select>
+        </div>
       </div>
 
-      <ExpenseSummary expenses={expenses} />
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        {stats.map((stat) => (
+          <div
+            key={stat.name}
+            className="relative overflow-hidden rounded-lg bg-white px-4 pb-12 pt-5 shadow sm:px-6 sm:pt-6"
+          >
+            <dt>
+              <div className="absolute rounded-md bg-indigo-500 p-3">
+                <stat.icon className="h-6 w-6 text-white" aria-hidden="true" />
+              </div>
+              <p className="ml-16 truncate text-sm font-medium text-gray-500">{stat.name}</p>
+            </dt>
+            <dd className="ml-16 flex items-baseline pb-6 sm:pb-7">
+              <p className="text-2xl font-semibold text-gray-900">{stat.value}</p>
+              <p
+                className={`ml-2 flex items-baseline text-sm font-semibold ${
+                  stat.changeType === 'increase'
+                    ? 'text-green-600'
+                    : stat.changeType === 'decrease'
+                    ? 'text-red-600'
+                    : 'text-gray-500'
+                }`}
+              >
+                {stat.changeType === 'increase' ? (
+                  <ArrowUpRight className="h-5 w-5 flex-shrink-0 self-center text-green-500" />
+                ) : stat.changeType === 'decrease' ? (
+                  <ArrowDownRight className="h-5 w-5 flex-shrink-0 self-center text-red-500" />
+                ) : null}
+                <span className="sr-only">
+                  {stat.changeType === 'increase' ? 'Increased by' : stat.changeType === 'decrease' ? 'Decreased by' : ''}
+                </span>
+                {stat.change}
+              </p>
+            </dd>
+          </div>
+        ))}
+      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold mb-4">Monthly Breakdown</h3>
-          <ExpenseChart expenses={expenses} />
+      {/* Recent Expenses */}
+      <div className="rounded-lg bg-white shadow">
+        <div className="px-4 py-5 sm:px-6">
+          <h3 className="text-lg font-medium leading-6 text-gray-900">Recent Expenses</h3>
         </div>
-
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold mb-4">Recent Expenses</h3>
-          <RecentExpenses expenses={expenses} />
+        <div className="border-t border-gray-200">
+          <ul role="list" className="divide-y divide-gray-200">
+            {recentExpenses.map((expense) => (
+              <li key={expense.id} className="px-4 py-4 sm:px-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <p className="text-sm font-medium text-indigo-600 truncate">{expense.description}</p>
+                    <div className="ml-2 flex flex-shrink-0">
+                      <p className="inline-flex rounded-full bg-green-100 px-2 text-xs font-semibold leading-5 text-green-800">
+                        {expense.category}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="ml-2 flex flex-shrink-0">
+                    <p className="text-sm font-medium text-gray-900">${expense.amount.toFixed(2)}</p>
+                    <p className="ml-2 text-sm text-gray-500">{expense.date}</p>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
     </div>

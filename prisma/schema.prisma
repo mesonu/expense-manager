@@ -29,6 +29,7 @@ model User {
   lastLoginDevice  String?
   deviceTokens     DeviceToken[]  // For push notifications
   twoFactorEnabled Boolean        @default(false)
+  twoFactorSecret  String?
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
 

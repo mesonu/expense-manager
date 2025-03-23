@@ -1,394 +1,252 @@
 // src/app/dashboard/expenses/page.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Plus, Filter, Search, ChevronDown } from 'lucide-react';
-import { Expense } from '@/types';
-import { generateDummyExpenses } from '@/lib/dummyData';
-import ExpenseList from '@/components/expenses/ExpenseList';
-import ExpenseForm from '@/components/expenses/ExpenseForm';
-import ExpenseFilters from '@/components/expenses/ExpenseFilters';
-import DateRangeFilter from '@/components/expenses/DateRangeFilter';
+import { useState } from 'react';
+import { Plus, Search, Filter, MoreVertical } from 'lucide-react';
+
+const expenses = [
+  {
+    id: 1,
+    description: 'Grocery Shopping',
+    amount: 120.50,
+    date: '2024-03-15',
+    category: 'Food',
+    status: 'completed',
+  },
+  {
+    id: 2,
+    description: 'Netflix Subscription',
+    amount: 15.99,
+    date: '2024-03-14',
+    category: 'Entertainment',
+    status: 'completed',
+  },
+  {
+    id: 3,
+    description: 'Gas',
+    amount: 45.00,
+    date: '2024-03-13',
+    category: 'Transportation',
+    status: 'completed',
+  },
+];
+
+const categories = [
+  'Food',
+  'Transportation',
+  'Entertainment',
+  'Utilities',
+  'Shopping',
+  'Healthcare',
+  'Other',
+];
 
 export default function ExpensesPage() {
-  const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [sortBy, setSortBy] = useState<'date' | 'amount'>('date');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-  const [dateRange, setDateRange] = useState<{
-    startDate: Date | null;
-    endDate: Date | null;
-  }>({ startDate: null, endDate: null });
-
-  useEffect(() => {
-    // Load expenses from localStorage or use dummy data
-    const savedExpenses = localStorage.getItem('expenses');
-    if (savedExpenses) {
-      setExpenses(JSON.parse(savedExpenses));
-    } else {
-      const dummyExpenses = generateDummyExpenses();
-      setExpenses(dummyExpenses);
-      localStorage.setItem('expenses', JSON.stringify(dummyExpenses));
-    }
-  }, []);
+  const [showAddExpense, setShowAddExpense] = useState(false);
 
   const filteredExpenses = expenses.filter((expense) => {
-    const matchesSearch = expense.description
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase());
-    const matchesCategory =
-      selectedCategory === 'all' || expense.category === selectedCategory;
-    const matchesDateRange =
-      (!dateRange.startDate ||
-        new Date(expense.date) >= dateRange.startDate) &&
-      (!dateRange.endDate ||
-        new Date(expense.date) <= dateRange.endDate);
-
-    return matchesSearch && matchesCategory && matchesDateRange;
+    const matchesSearch = expense.description.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = selectedCategory === 'all' || expense.category === selectedCategory;
+    return matchesSearch && matchesCategory;
   });
 
-  const handleDeleteExpenses = (ids: string[]) => {
-    const updatedExpenses = expenses.filter((exp) => !ids.includes(exp.id));
-    setExpenses(updatedExpenses);
-    localStorage.setItem('expenses', JSON.stringify(updatedExpenses));
-  };
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold text-gray-900">Expenses</h1>
+        <button
+          onClick={() => setShowAddExpense(true)}
+          className="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+        >
+          <Plus className="-ml-0.5 mr-1.5 h-5 w-5" aria-hidden="true" />
+          Add Expense
+        </button>
+      </div>
 
-  const handleUpdateExpense = (updatedExpense: Expense) => {
-    const updatedExpenses = expenses.map((exp) =>
-      exp.id === updatedExpense.id ? updatedExpense : exp
-    );
-    setExpenses(updatedExpenses);
-    localStorage.setItem('expenses', JSON.stringify(updatedExpenses));
-  };
-
-  const filteredAndSortedExpenses = expenses
-    .filter((expense) => {
-      const matchesSearch = expense.description
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase());
-      const matchesCategory =
-        selectedCategory === 'all' || expense.category === selectedCategory;
-      const matchesDateRange =
-        (!dateRange.startDate ||
-          new Date(expense.date) >= dateRange.startDate) &&
-        (!dateRange.endDate ||
-          new Date(expense.date) <= dateRange.endDate);
-
-      return matchesSearch && matchesCategory && matchesDateRange;
-    })
-    .sort((a, b) => {
-      if (sortBy === 'date') {
-        return sortOrder === 'desc'
-          ? new Date(b.date).getTime() - new Date(a.date).getTime()
-          : new Date(a.date).getTime() - new Date(b.date).getTime();
-      } else {
-        return sortOrder === 'desc'
-          ? b.amount - a.amount
-          : a.amount - b.amount;
-      }
-    });
-
-    return (
-        <div className="space-y-6 max-w-full">
-          {/* Header */}
-          <div className="flex justify-between items-center">
-            <h2 className="text-2xl font-bold text-gray-800">Expenses</h2>
-            <button
-              onClick={() => setIsModalOpen(true)}
-              className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Expense
-            </button>
+      {/* Filters */}
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="relative flex-1">
+          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+            <Search className="h-5 w-5 text-gray-400" aria-hidden="true" />
           </div>
-    
-          {/* Filters and Search Section */}
-          <div className="bg-white rounded-lg shadow p-4">
-            <div className="grid gap-4">
-              {/* Search and Category Filter */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Search className="h-4 w-4 text-gray-400" />
-                  </div>
-                  <input
-                    type="text"
-                    placeholder="Search expenses..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="block w-full pl-10 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                  />
-                </div>
-                
-                <ExpenseFilters
-                  selectedCategory={selectedCategory}
-                  onCategoryChange={setSelectedCategory}
-                />
-    
-                <div className="flex items-center space-x-2">
-                  <select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value as 'date' | 'amount')}
-                    className="block w-32 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                  >
-                    <option value="date">Date</option>
-                    <option value="amount">Amount</option>
-                  </select>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="block w-full rounded-md border-0 py-1.5 pl-10 pr-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+            placeholder="Search expenses..."
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <Filter className="h-5 w-5 text-gray-400" aria-hidden="true" />
+          <select
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            className="rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+          >
+            <option value="all">All Categories</option>
+            {categories.map((category) => (
+              <option key={category} value={category}>
+                {category}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* Expenses Table */}
+      <div className="mt-8 flow-root">
+        <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+          <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
+            <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg">
+              <table className="min-w-full divide-y divide-gray-300">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">
+                      Description
+                    </th>
+                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                      Category
+                    </th>
+                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                      Date
+                    </th>
+                    <th scope="col" className="px-3 py-3.5 text-right text-sm font-semibold text-gray-900">
+                      Amount
+                    </th>
+                    <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-6">
+                      <span className="sr-only">Actions</span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200 bg-white">
+                  {filteredExpenses.map((expense) => (
+                    <tr key={expense.id}>
+                      <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
+                        {expense.description}
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                        <span className="inline-flex rounded-full bg-green-100 px-2 text-xs font-semibold leading-5 text-green-800">
+                          {expense.category}
+                        </span>
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                        {expense.date}
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-right text-gray-900">
+                        ${expense.amount.toFixed(2)}
+                      </td>
+                      <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+                        <button className="text-gray-400 hover:text-gray-500">
+                          <MoreVertical className="h-5 w-5" aria-hidden="true" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Add Expense Modal */}
+      {showAddExpense && (
+        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity">
+          <div className="fixed inset-0 z-10 overflow-y-auto">
+            <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+              <div className="relative transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
+                <div className="absolute right-0 top-0 pr-4 pt-4">
                   <button
-                    onClick={() => setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc')}
-                    className="p-2 rounded-md hover:bg-gray-100"
+                    type="button"
+                    className="rounded-md bg-white text-gray-400 hover:text-gray-500"
+                    onClick={() => setShowAddExpense(false)}
                   >
-                    <ChevronDown
-                      className={`h-4 w-4 transform transition-transform ${
-                        sortOrder === 'asc' ? 'rotate-180' : ''
-                      }`}
-                    />
+                    <span className="sr-only">Close</span>
+                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+                <div className="sm:flex sm:items-start">
+                  <div className="mt-3 text-center sm:mt-0 sm:text-left w-full">
+                    <h3 className="text-base font-semibold leading-6 text-gray-900">Add New Expense</h3>
+                    <div className="mt-4 space-y-4">
+                      <div>
+                        <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+                          Description
+                        </label>
+                        <input
+                          type="text"
+                          name="description"
+                          id="description"
+                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="amount" className="block text-sm font-medium text-gray-700">
+                          Amount
+                        </label>
+                        <input
+                          type="number"
+                          name="amount"
+                          id="amount"
+                          step="0.01"
+                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="category" className="block text-sm font-medium text-gray-700">
+                          Category
+                        </label>
+                        <select
+                          id="category"
+                          name="category"
+                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                        >
+                          {categories.map((category) => (
+                            <option key={category} value={category}>
+                              {category}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label htmlFor="date" className="block text-sm font-medium text-gray-700">
+                          Date
+                        </label>
+                        <input
+                          type="date"
+                          name="date"
+                          id="date"
+                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
+                  <button
+                    type="button"
+                    className="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 sm:ml-3 sm:w-auto"
+                  >
+                    Add Expense
+                  </button>
+                  <button
+                    type="button"
+                    className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto"
+                    onClick={() => setShowAddExpense(false)}
+                  >
+                    Cancel
                   </button>
                 </div>
               </div>
-    
-              {/* Date Range Filter */}
-              <div className="mt-2">
-                <DateRangeFilter
-                  onDateRangeChange={(startDate, endDate) =>
-                    setDateRange({ startDate, endDate })
-                  }
-                />
-              </div>
             </div>
           </div>
-    
-          {/* Expenses List */}
-          <ExpenseList
-            expenses={filteredAndSortedExpenses}
-            onDelete={handleDeleteExpenses}
-            onUpdate={handleUpdateExpense}
-          />
-    
-          {/* Add/Edit Expense Modal */}
-          {isModalOpen && (
-            <ExpenseForm
-              onClose={() => setIsModalOpen(false)}
-              onSubmit={(newExpense) => {
-                setExpenses([newExpense, ...expenses]);
-                localStorage.setItem(
-                  'expenses',
-                  JSON.stringify([newExpense, ...expenses])
-                );
-                setIsModalOpen(false);
-              }}
-            />
-          )}
         </div>
-      );
-
-//   return (
-//     <div className="space-y-6">
-//       <div className="flex justify-between items-center">
-//         <h2 className="text-2xl font-bold text-gray-800">Expenses</h2>
-//         <button
-//           onClick={() => setIsModalOpen(true)}
-//           className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700"
-//         >
-//           <Plus className="h-4 w-4 mr-2" />
-//           Add Expense
-//         </button>
-//       </div>
-
-//       {/* Filters */}
-//       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-//         <input
-//           type="text"
-//           placeholder="Search expenses..."
-//           value={searchTerm}
-//           onChange={(e) => setSearchTerm(e.target.value)}
-//           className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-//         />
-        
-//         <ExpenseFilters
-//           selectedCategory={selectedCategory}
-//           onCategoryChange={setSelectedCategory}
-//         />
-
-//         <DateRangeFilter
-//           onDateRangeChange={(startDate, endDate) =>
-//             setDateRange({ startDate, endDate })
-//           }
-//         />
-//       </div>
-
-//       {/* Expenses List */}
-//       <ExpenseList
-//         expenses={filteredExpenses}
-//         onDelete={handleDeleteExpenses}
-//         onUpdate={handleUpdateExpense}
-//       />
-
-//       {/* Add/Edit Expense Modal */}
-//       {isModalOpen && (
-//         <ExpenseForm
-//           onClose={() => setIsModalOpen(false)}
-//           onSubmit={(newExpense) => {
-//             setExpenses([newExpense, ...expenses]);
-//             localStorage.setItem(
-//               'expenses',
-//               JSON.stringify([newExpense, ...expenses])
-//             );
-//             setIsModalOpen(false);
-//           }}
-//         />
-//       )}
-//     </div>
-//   ); 
+      )}
+    </div>
+  );
 }
-
-
-// // src/app/dashboard/expenses/page.tsx
-// 'use client';
-
-// import { useState, useEffect } from 'react';
-// import { Plus, Filter, Search, ChevronDown } from 'lucide-react';
-// import { Expense } from '@/types';
-// import { generateDummyExpenses } from '@/lib/dummyData';
-// import ExpenseList from '@/components/expenses/ExpenseList';
-// import ExpenseForm from '@/components/expenses/ExpenseForm';
-// import ExpenseFilters from '@/components/expenses/ExpenseFilters';
-
-// export default function ExpensesPage() {
-//   const [expenses, setExpenses] = useState<Expense[]>([]);
-//   const [isModalOpen, setIsModalOpen] = useState(false);
-//   const [searchTerm, setSearchTerm] = useState('');
-//   const [selectedCategory, setSelectedCategory] = useState('all');
-//   const [sortBy, setSortBy] = useState<'date' | 'amount'>('date');
-//   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-
-//   useEffect(() => {
-//     // Load expenses from localStorage or use dummy data
-//     const savedExpenses = localStorage.getItem('expenses');
-//     if (savedExpenses) {
-//       setExpenses(JSON.parse(savedExpenses));
-//     } else {
-//       const dummyExpenses = generateDummyExpenses();
-//       setExpenses(dummyExpenses);
-//       localStorage.setItem('expenses', JSON.stringify(dummyExpenses));
-//     }
-//   }, []);
-
-//   const filteredExpenses = expenses
-//     .filter((expense) => {
-//       const matchesSearch = expense.description
-//         .toLowerCase()
-//         .includes(searchTerm.toLowerCase());
-//       const matchesCategory =
-//         selectedCategory === 'all' || expense.category === selectedCategory;
-//       return matchesSearch && matchesCategory;
-//     })
-//     .sort((a, b) => {
-//       if (sortBy === 'date') {
-//         return sortOrder === 'desc'
-//           ? new Date(b.date).getTime() - new Date(a.date).getTime()
-//           : new Date(a.date).getTime() - new Date(b.date).getTime();
-//       } else {
-//         return sortOrder === 'desc'
-//           ? b.amount - a.amount
-//           : a.amount - b.amount;
-//       }
-//     });
-
-//   const handleAddExpense = (newExpense: Expense) => {
-//     const updatedExpenses = [newExpense, ...expenses];
-//     setExpenses(updatedExpenses);
-//     localStorage.setItem('expenses', JSON.stringify(updatedExpenses));
-//     setIsModalOpen(false);
-//   };
-
-//   const handleDeleteExpense = (expenseId: string) => {
-//     const updatedExpenses = expenses.filter((exp) => exp.id !== expenseId);
-//     setExpenses(updatedExpenses);
-//     localStorage.setItem('expenses', JSON.stringify(updatedExpenses));
-//   };
-
-//   const handleUpdateExpense = (updatedExpense: Expense) => {
-//     const updatedExpenses = expenses.map((exp) =>
-//       exp.id === updatedExpense.id ? updatedExpense : exp
-//     );
-//     setExpenses(updatedExpenses);
-//     localStorage.setItem('expenses', JSON.stringify(updatedExpenses));
-//   };
-
-//   return (
-//     <div className="space-y-6">
-//       <div className="flex justify-between items-center">
-//         <h2 className="text-2xl font-bold text-gray-800">Expenses</h2>
-//         <button
-//           onClick={() => setIsModalOpen(true)}
-//           className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700"
-//         >
-//           <Plus className="h-4 w-4 mr-2" />
-//           Add Expense
-//         </button>
-//       </div>
-
-//       {/* Filters and Search */}
-//       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-//         <div className="relative">
-//           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-//             <Search className="h-4 w-4 text-gray-400" />
-//           </div>
-//           <input
-//             type="text"
-//             placeholder="Search expenses..."
-//             value={searchTerm}
-//             onChange={(e) => setSearchTerm(e.target.value)}
-//             className="block w-full pl-10 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-//           />
-//         </div>
-
-//         <ExpenseFilters
-//           selectedCategory={selectedCategory}
-//           onCategoryChange={setSelectedCategory}
-//         />
-
-//         <div className="flex items-center space-x-4">
-//           <select
-//             value={sortBy}
-//             onChange={(e) => setSortBy(e.target.value as 'date' | 'amount')}
-//             className="block w-32 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-//           >
-//             <option value="date">Date</option>
-//             <option value="amount">Amount</option>
-//           </select>
-//           <button
-//             onClick={() =>
-//               setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc')
-//             }
-//             className="p-2 rounded-md hover:bg-gray-100"
-//           >
-//             <ChevronDown
-//               className={`h-4 w-4 transform transition-transform ${
-//                 sortOrder === 'asc' ? 'rotate-180' : ''
-//               }`}
-//             />
-//           </button>
-//         </div>
-//       </div>
-
-//       {/* Expenses List */}
-//       <ExpenseList
-//         expenses={filteredExpenses}
-//         onDelete={handleDeleteExpense}
-//         onUpdate={handleUpdateExpense}
-//       />
-
-//       {/* Add/Edit Expense Modal */}
-//       {isModalOpen && (
-//         <ExpenseForm
-//           onClose={() => setIsModalOpen(false)}
-//           onSubmit={handleAddExpense}
-//         />
-//       )}
-//     </div>
-//   );
-// }

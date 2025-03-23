@@ -1,19 +1,48 @@
 // src/middleware.ts
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { validateCSRFToken } from "@/lib/utils/security";
 
-export function middleware(request: NextRequest) {
-  const path = request.nextUrl.pathname;
-  const isPublicPath = path === '/signin' || path === '/signup';
-  const token = request.cookies.get('user')?.value;
+export async function middleware(request: NextRequest) {
+  try {
+    const path = request.nextUrl.pathname;
+    // Skip CSRF check for CSRF token endpoint and non-POST requests
+    if (path === '/api/auth/csrf' || request.method === 'GET') {
+      return NextResponse.next();
+    }
 
-  if (isPublicPath && token) {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
+    // CSRF validation for API routes
+    if (path.startsWith('/api/') && request.method !== 'GET') {
+      const csrfToken = request.headers.get('x-csrf-token');
+      const isValid = await validateCSRFToken(csrfToken);
+      if (!isValid) {
+        return NextResponse.json(
+          { message: 'Invalid CSRF token' },
+          { status: 403 }
+        );
+      }
+    }
+
+    // Auth redirects
+    const isPublicPath = path === '/signin' || path === '/signup';
+    const token = request.cookies.get('user')?.value;
+    if (isPublicPath && token) {
+      return NextResponse.redirect(new URL('/dashboard', request.url));
+    }
+
+    if (!isPublicPath && !token) {
+      return NextResponse.redirect(new URL('/signin', request.url));
+    }
+
+    return NextResponse.next();
+  } catch (error) {
+    console.error('[Middleware Error]:', error);
+    return NextResponse.json(
+      { error: 'Internal Server Error' },
+      { status: 500 }
+    );
   }
-
-  if (!isPublicPath && !token) {
-    return NextResponse.redirect(new URL('/signin', request.url));
-  }
+  
 }
 
 export const config = {
@@ -22,6 +51,8 @@ export const config = {
     '/signin',
     '/signup',
     '/dashboard/:path*',
+    // Add API routes for CSRF protection
+    '/api/:path*'
   ],
 };
 
